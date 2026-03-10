@@ -22,9 +22,9 @@ public class AppDbContext : DbContext
             entity.Property(e => e.Category).IsRequired().HasMaxLength(100);
             entity.Property(e => e.PriceINR).HasPrecision(18, 2);
             entity.Property(e => e.WebsiteURL).IsRequired().HasMaxLength(500);
-            entity.Property(e => e.Description).HasColumnType("text");
+            entity.Property(e => e.Description).HasColumnType("nvarchar(max)");
             entity.Property(e => e.LogoURL).HasMaxLength(500);
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP(6)");
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
         });
 
         modelBuilder.Entity<Category>(entity =>

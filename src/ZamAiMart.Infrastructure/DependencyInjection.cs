@@ -14,15 +14,11 @@ public static class DependencyInjection
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        var connectionString = configuration.GetConnectionString("MySqlConnection")
-            ?? throw new InvalidOperationException("Connection string 'MySqlConnection' not found.");
+        var connectionString = configuration.GetConnectionString("SqlServerConnection")
+            ?? throw new InvalidOperationException("Connection string 'SqlServerConnection' not found.");
 
         services.AddDbContext<AppDbContext>(options =>
-            options.UseMySql(
-                connectionString,
-                ServerVersion.AutoDetect(connectionString),
-                mySql => mySql.EnableRetryOnFailure(3)
-            ));
+            options.UseSqlServer(connectionString));
 
         services.AddScoped<IAIWebsiteRepository, AIWebsiteRepository>();
         services.AddScoped<ICategoryRepository, CategoryRepository>();
