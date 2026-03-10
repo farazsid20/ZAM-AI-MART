@@ -1,0 +1,66 @@
+## .NET / ASP.NET Core
+*.user
+*.userosscache
+*.suo
+*.userprefs
+.vs/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+## Build results
+build/
+publish/
+
+## NuGet packages
+*.nupkg
+*.snupkg
+.nuget/
+packages/
+!**/packages/repositories.config
+*.nuget.props
+*.nuget.targets
+
+## Rider
+.idea/
+*.sln.iml
+
+## Visual Studio
+.vs/
+
+## VS Code
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+## SQLite database files (auto-created on first run)
+*.db
+*.db-shm
+*.db-wal
+
+## Sensitive config
+appsettings.Production.json
+**/secrets.json
+
+## Blazor WASM
+wwwroot/_framework/
+
+## OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+## Temporary files
+*.tmp
+*.temp
+~$*

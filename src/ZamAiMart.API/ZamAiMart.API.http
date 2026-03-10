@@ -1,0 +1,6 @@
+@ZamAiMart.API_HostAddress = http://localhost:5078
+
+GET {{ZamAiMart.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

@@ -1,0 +1,235 @@
+@page "/tools"
+@using ZamAiMart.Client.Models
+@using ZamAiMart.Client.Services
+@using ZamAiMart.Client.Shared
+@inject ApiService Api
+@inject NavigationManager Nav
+
+<PageTitle>AI Tools - ZAM AI MART</PageTitle>
+
+<!-- Header -->
+<div class="bg-gradient-to-r from-violet-700 to-indigo-700 text-white py-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h1 class="text-3xl sm:text-4xl font-black mb-2">AI Tools Directory</h1>
+        <p class="text-white/80">Browse and discover the best AI tools with prices in ₹</p>
+    </div>
+</div>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="flex flex-col lg:flex-row gap-8">
+        <!-- Sidebar Filters -->
+        <aside class="lg:w-64 shrink-0">
+            <div class="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-5 sticky top-20">
+                <h3 class="font-bold text-gray-900 dark:text-white mb-4 text-sm uppercase tracking-wider">Filters</h3>
+
+                <!-- Search -->
+                <div class="mb-5">
+                    <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">Search</label>
+                    <div class="relative">
+                    <input type="text" value="@_searchDto.Query" @oninput="OnSearchChanged"
+                           placeholder="Tool name, keyword..."
+                           class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                    </div>
+                </div>
+
+                <!-- Category Filter -->
+                <div class="mb-5">
+                    <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">Category</label>
+                    <select @bind="_categoryIdStr" @bind:after="ApplyFilters"
+                            class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-violet-500">
+                        <option value="">All Categories</option>
+                        @foreach (var cat in _categories)
+                        {
+                            <option value="@cat.Id">@cat.Icon @cat.Name</option>
+                        }
+                    </select>
+                </div>
+
+                <!-- Pricing Filter -->
+                <div class="mb-5">
+                    <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">Pricing</label>
+                    <div class="space-y-2">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="pricing" value="" @onchange="() => SetPricing(null)" class="text-violet-600" checked="@(_searchDto.IsFree == null)" />
+                            <span class="text-sm text-gray-700 dark:text-gray-300">All</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="pricing" value="free" @onchange="() => SetPricing(true)" class="text-violet-600" checked="@(_searchDto.IsFree == true)" />
+                            <span class="text-sm text-gray-700 dark:text-gray-300">Free Only</span>
+                        </label>
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="pricing" value="paid" @onchange="() => SetPricing(false)" class="text-violet-600" checked="@(_searchDto.IsFree == false)" />
+                            <span class="text-sm text-gray-700 dark:text-gray-300">Paid Only</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Featured -->
+                <div class="mb-5">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" @bind="_showFeaturedOnly" @bind:after="ApplyFilters" class="rounded text-violet-600" />
+                        <span class="text-sm text-gray-700 dark:text-gray-300">Featured Only ⭐</span>
+                    </label>
+                </div>
+
+                <button @onclick="ClearFilters" class="w-full text-xs text-gray-500 dark:text-gray-400 hover:text-violet-600 py-2 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg transition-colors">
+                    Clear All Filters
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <div class="flex-1 min-w-0">
+            <!-- Results Header -->
+            <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
+                <div>
+                    <h2 class="text-lg font-bold text-gray-900 dark:text-white">
+                        @if (_loading)
+                        { <span>Loading...</span> }
+                        else
+                        { <span>@_result.TotalCount AI Tools</span> }
+                    </h2>
+                    @if (!string.IsNullOrEmpty(_searchDto.Query))
+                    {
+                        <p class="text-sm text-gray-500 dark:text-gray-400">Search results for "<span class="text-violet-600 font-medium">@_searchDto.Query</span>"</p>
+                    }
+                </div>
+            </div>
+
+            @if (_loading)
+            {
+                <LoadingSpinner Message="Searching AI tools..." />
+            }
+            else if (_result.Items.Count == 0)
+            {
+                <div class="text-center py-16">
+                    <div class="text-6xl mb-4">🔍</div>
+                    <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">No tools found</h3>
+                    <p class="text-gray-500 dark:text-gray-400 mb-6">Try different search terms or clear the filters</p>
+                    <button @onclick="ClearFilters" class="bg-violet-600 text-white px-6 py-2 rounded-xl font-medium hover:bg-violet-700 transition-colors">
+                        Clear Filters
+                    </button>
+                </div>
+            }
+            else
+            {
+                <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5 mb-8">
+                    @foreach (var tool in _result.Items)
+                    {
+                        <ToolCard Tool="tool" />
+                    }
+                </div>
+
+                <!-- Pagination -->
+                @if (_result.TotalPages > 1)
+                {
+                    <div class="flex justify-center items-center gap-2">
+                        <button @onclick="() => ChangePage(_searchDto.Page - 1)"
+                                disabled="@(_searchDto.Page <= 1)"
+                                class="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                            ← Prev
+                        </button>
+                        @{
+                            var startPage = Math.Max(1, _searchDto.Page - 2);
+                            var endPage = Math.Min(_result.TotalPages, _searchDto.Page + 2);
+                        }
+                        @for (int i = startPage; i <= endPage; i++)
+                        {
+                            var pageNum = i;
+                            <button @onclick="() => ChangePage(pageNum)"
+                                    class="@(pageNum == _searchDto.Page ? "bg-violet-600 text-white border-violet-600" : "border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700") px-4 py-2 rounded-lg border text-sm font-medium transition-colors">
+                                @pageNum
+                            </button>
+                        }
+                        <button @onclick="() => ChangePage(_searchDto.Page + 1)"
+                                disabled="@(_searchDto.Page >= _result.TotalPages)"
+                                class="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                            Next →
+                        </button>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    [SupplyParameterFromQuery] public string? Query { get; set; }
+    [SupplyParameterFromQuery] public int? CategoryId { get; set; }
+    [SupplyParameterFromQuery] public bool? IsFeatured { get; set; }
+    [SupplyParameterFromQuery] public bool? IsFree { get; set; }
+
+    private AIToolSearchDto _searchDto = new() { PageSize = 21 };
+    private PagedResult<AIToolDto> _result = new();
+    private List<CategoryDto> _categories = new();
+    private bool _loading = true;
+    private bool _showFeaturedOnly;
+    private string _categoryIdStr = "";
+    private System.Timers.Timer? _debounceTimer;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _searchDto.Query = Query;
+        _searchDto.CategoryId = CategoryId;
+        _searchDto.IsFeatured = IsFeatured;
+        _searchDto.IsFree = IsFree;
+        if (CategoryId.HasValue) _categoryIdStr = CategoryId.ToString()!;
+        if (IsFeatured == true) _showFeaturedOnly = true;
+
+        _categories = await Api.GetCategoriesAsync();
+        await LoadTools();
+    }
+
+    private async Task LoadTools()
+    {
+        _loading = true;
+        StateHasChanged();
+        _result = await Api.GetToolsAsync(_searchDto);
+        _loading = false;
+        StateHasChanged();
+    }
+
+    private void OnSearchChanged(ChangeEventArgs e)
+    {
+        _searchDto.Query = e.Value?.ToString();
+        _debounceTimer?.Dispose();
+        _debounceTimer = new System.Timers.Timer(400);
+        _debounceTimer.Elapsed += async (_, _) =>
+        {
+            _debounceTimer?.Dispose();
+            _searchDto.Page = 1;
+            await InvokeAsync(LoadTools);
+        };
+        _debounceTimer.AutoReset = false;
+        _debounceTimer.Start();
+    }
+
+    private async Task ApplyFilters()
+    {
+        _searchDto.CategoryId = string.IsNullOrEmpty(_categoryIdStr) ? null : int.Parse(_categoryIdStr);
+        _searchDto.IsFeatured = _showFeaturedOnly ? true : null;
+        _searchDto.Page = 1;
+        await LoadTools();
+    }
+
+    private async Task SetPricing(bool? value)
+    {
+        _searchDto.IsFree = value;
+        _searchDto.Page = 1;
+        await LoadTools();
+    }
+
+    private async Task ChangePage(int page)
+    {
+        _searchDto.Page = page;
+        await LoadTools();
+    }
+
+    private async Task ClearFilters()
+    {
+        _searchDto = new AIToolSearchDto { PageSize = 21 };
+        _categoryIdStr = "";
+        _showFeaturedOnly = false;
+        await LoadTools();
+    }
+}

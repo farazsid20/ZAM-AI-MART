@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/ZamAiMart.API/ZamAiMart.API.csproj" />
+    <Project Path="src/ZamAiMart.Client/ZamAiMart.Client.csproj" />
+    <Project Path="src/ZamAiMart.Core/ZamAiMart.Core.csproj" />
+    <Project Path="src/ZamAiMart.Infrastructure/ZamAiMart.Infrastructure.csproj" />
+  </Folder>
+</Solution>
