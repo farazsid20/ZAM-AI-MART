@@ -143,18 +143,30 @@
             });
             observer.observe(app, { childList: true, subtree: false });
 
-            // Hard-kill fallback — if Blazor takes >15s something is wrong
+            // After 12s show "still loading" hint (Blazor WASM is large on first visit)
+            setTimeout(function () {
+                var sub = document.querySelector('#loading-screen .loading-sub');
+                if (sub) sub.textContent = 'Still loading... first visit may take a moment';
+            }, 12000);
+
+            // After 30s escalate message
+            setTimeout(function () {
+                var sub = document.querySelector('#loading-screen .loading-sub');
+                if (sub) sub.textContent = 'Almost there... downloading runtime...';
+            }, 30000);
+
+            // Hard-kill fallback at 90s
             setTimeout(function () {
                 if (document.getElementById('loading-screen')) {
                     screen.innerHTML = '<div style="text-align:center;padding:32px">'
                         + '<div class="loading-logo" style="margin:0 auto 16px">Z</div>'
                         + '<div class="loading-title">ZAM AI MART</div>'
-                        + '<p style="font-size:13px;opacity:0.7;margin-top:12px">Could not connect to the server.<br>'
-                        + 'The API may be offline.</p>'
+                        + '<p style="font-size:13px;opacity:0.7;margin-top:12px">Taking longer than expected.<br>'
+                        + 'Please check your connection and try again.</p>'
                         + '<a href="." style="display:inline-block;margin-top:20px;padding:10px 24px;background:rgba(255,255,255,0.15);border-radius:12px;font-size:13px;border:1px solid rgba(255,255,255,0.3)">Retry</a>'
                         + '</div>';
                 }
-            }, 15000);
+            }, 90000);
         })();
     </script>
 
