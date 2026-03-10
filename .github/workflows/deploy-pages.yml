@@ -39,26 +39,26 @@ jobs:
             --no-restore \
             -p:BlazorCacheBootResources=false
 
-      - name: Fix base href for GitHub Pages subdirectory
+      - name: Fix base href and fingerprinted asset paths for GitHub Pages
         run: |
           cd publish/client/wwwroot
           # Replace base href to match GitHub Pages repo sub-path
           sed -i 's|<base href="/" />|<base href="/ZAM-AI-MART/" />|g' index.html
-          # Also patch the integrity check off in blazor.boot.json if present
-          if [ -f "_framework/blazor.boot.json" ]; then
-            python3 -c "
-          import json, sys
-          with open('_framework/blazor.boot.json','r') as f:
-              data = json.load(f)
-          if 'resources' in data:
-              for section in data['resources'].values():
-                  if isinstance(section, dict):
-                      for key in list(section.keys()):
-                          section[key] = ''
-          with open('_framework/blazor.boot.json','w') as f:
-              json.dump(data, f)
-          "
+
+          # In .NET 9/10, blazor.webassembly.js is published with a fingerprint hash
+          # (e.g. blazor.webassembly.66stpp682q.js). index.html still references the
+          # unfingerprinted name, causing a 404. Detect and patch it.
+          BLAZOR_JS=$(find _framework -maxdepth 1 -name "blazor.webassembly.*.js" \
+                        ! -name "*.gz" ! -name "*.br" 2>/dev/null | head -1 | xargs basename 2>/dev/null || true)
+          if [ -n "$BLAZOR_JS" ]; then
+            sed -i "s|_framework/blazor.webassembly.js|_framework/${BLAZOR_JS}|g" index.html
+            echo "Patched Blazor bootstrap script: blazor.webassembly.js -> ${BLAZOR_JS}"
+          else
+            echo "No fingerprinted blazor.webassembly.js found; using original reference"
           fi
+
+          echo "--- index.html script line ---"
+          grep -i "blazor" index.html || true
 
       - name: Create 404.html for SPA client-side routing
         run: cp publish/client/wwwroot/index.html publish/client/wwwroot/404.html
