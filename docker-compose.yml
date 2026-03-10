@@ -1,0 +1,55 @@
+version: '3.9'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: zamaimart-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ZamAiMart
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: zamaimart@2026
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ASP.NET Core API
+  api:
+    build:
+      context: .
+      dockerfile: src/ZamAiMart.API/Dockerfile
+    container_name: zamaimart-api
+    restart: unless-stopped
+    ports:
+      - "5000:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - UsePostgreSQL=true
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=ZamAiMart;Username=postgres;Password=zamaimart@2026
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # Nginx - serves Blazor WASM static files and proxies /api to the API
+  client:
+    image: nginx:alpine
+    container_name: zamaimart-client
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./blazor-publish:/usr/share/nginx/html:ro
+    depends_on:
+      - api
+
+volumes:
+  postgres_data:

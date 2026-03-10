@@ -1,0 +1,14 @@
+services:
+  # ASP.NET Core API on Render.com (free tier)
+  - type: web
+    name: zam-ai-mart-api
+    runtime: docker
+    dockerfilePath: src/ZamAiMart.API/Dockerfile
+    dockerContext: .
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: UsePostgreSQL
+        value: false

@@ -1,0 +1,42 @@
+name: CI - Build & Test
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    name: Build & Verify
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build Core
+        run: dotnet build src/ZamAiMart.Core/ZamAiMart.Core.csproj --no-restore -c Release
+
+      - name: Build Infrastructure
+        run: dotnet build src/ZamAiMart.Infrastructure/ZamAiMart.Infrastructure.csproj --no-restore -c Release
+
+      - name: Build API
+        run: dotnet build src/ZamAiMart.API/ZamAiMart.API.csproj --no-restore -c Release
+
+      - name: Build Blazor Client
+        run: dotnet build src/ZamAiMart.Client/ZamAiMart.Client.csproj --no-restore -c Release
+
+      - name: Publish API (verify)
+        run: dotnet publish src/ZamAiMart.API/ZamAiMart.API.csproj -c Release -o ./publish/api --no-restore
+
+      - name: Publish Blazor WASM (verify)
+        run: dotnet publish src/ZamAiMart.Client/ZamAiMart.Client.csproj -c Release -o ./publish/client --no-restore

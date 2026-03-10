@@ -48,9 +48,10 @@ packages/
 *.db-shm
 *.db-wal
 
-## Sensitive config
-appsettings.Production.json
+## Sensitive config (do NOT commit real secrets)
 **/secrets.json
+**/*.pfx
+**/*.p12
 
 ## Blazor WASM
 wwwroot/_framework/
