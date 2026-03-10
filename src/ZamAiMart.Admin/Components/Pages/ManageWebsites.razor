@@ -1,0 +1,248 @@
+@page "/websites"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+@using ZamAiMart.Core.DTOs
+@using ZamAiMart.Core.Interfaces
+@inject IAIWebsiteService WebsiteService
+@inject ICategoryService CategoryService
+
+<div class="page-section">
+    <div class="page-header">
+        <h2 class="page-title">AI Websites</h2>
+        <button class="btn btn-primary" @onclick="ShowAddForm">+ Add New</button>
+    </div>
+
+    @if (!string.IsNullOrEmpty(_successMsg))
+    {
+        <div class="alert alert-success">@_successMsg</div>
+    }
+    @if (!string.IsNullOrEmpty(_errorMsg))
+    {
+        <div class="alert alert-error">@_errorMsg</div>
+    }
+
+    @if (_showForm)
+    {
+        <div class="form-card">
+            <h3>@(_editId > 0 ? "Edit AI Website" : "Add AI Website")</h3>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Name *</label>
+                    <input class="form-control" @bind="_form.Name" placeholder="e.g. ChatGPT" />
+                </div>
+                <div class="form-group">
+                    <label>Category *</label>
+                    <select class="form-control" @bind="_form.Category">
+                        <option value="">-- Select Category --</option>
+                        @foreach (var cat in _categories)
+                        {
+                            <option value="@cat.CategoryName">@cat.CategoryName</option>
+                        }
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Website URL *</label>
+                    <input class="form-control" @bind="_form.WebsiteURL" placeholder="https://..." />
+                </div>
+                <div class="form-group">
+                    <label>Logo URL</label>
+                    <input class="form-control" @bind="_form.LogoURL" placeholder="https://..." />
+                </div>
+                <div class="form-group">
+                    <label>Price (₹ INR)</label>
+                    <input type="number" class="form-control" @bind="_form.PriceINR" placeholder="0" />
+                </div>
+                <div class="form-group form-check-group">
+                    <label><input type="checkbox" @bind="_form.IsFree" /> Free Tool</label>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Description</label>
+                <textarea class="form-control" rows="3" @bind="_form.Description" placeholder="Brief description..."></textarea>
+            </div>
+            <div class="form-actions">
+                <button class="btn btn-primary" @onclick="SaveAsync">@(_editId > 0 ? "Update" : "Save")</button>
+                <button class="btn btn-secondary" @onclick="CancelForm">Cancel</button>
+            </div>
+        </div>
+    }
+
+    @if (_loading)
+    {
+        <div class="loading">Loading AI websites...</div>
+    }
+    else
+    {
+        <!-- Search & Filter -->
+        <div class="filter-bar">
+            <input class="form-control search-input" @bind="_search" @bind:event="oninput"
+                   placeholder="Search by name or category..." />
+            <select class="form-control" @bind="_filterCategory">
+                <option value="">All Categories</option>
+                @foreach (var cat in _categories)
+                {
+                    <option value="@cat.CategoryName">@cat.CategoryName</option>
+                }
+            </select>
+        </div>
+
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Name</th>
+                    <th>Category</th>
+                    <th>Price</th>
+                    <th>URL</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var w in FilteredWebsites)
+                {
+                    <tr>
+                        <td>@w.Id</td>
+                        <td>
+                            @if (!string.IsNullOrEmpty(w.LogoURL))
+                            {
+                                <img src="@w.LogoURL" alt="@w.Name" class="logo-thumb"
+                                     onerror="this.style.display='none'" />
+                            }
+                            @w.Name
+                        </td>
+                        <td><span class="badge">@w.Category</span></td>
+                        <td>
+                            @if (w.IsFree)
+                            {
+                                <span class="badge badge-free">FREE</span>
+                            }
+                            else
+                            {
+                                <span>₹@w.PriceINR.ToString("N0")</span>
+                            }
+                        </td>
+                        <td><a href="@w.WebsiteURL" target="_blank" class="link-ext">🔗 Visit</a></td>
+                        <td>
+                            <button class="btn btn-sm btn-edit" @onclick="() => EditWebsite(w)">✏️ Edit</button>
+                            <button class="btn btn-sm btn-delete" @onclick="() => DeleteAsync(w.Id, w.Name)">🗑️ Delete</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        <p class="record-count">Showing @FilteredWebsites.Count() of @_websites.Count records</p>
+    }
+</div>
+
+@code {
+    private bool _loading = true, _showForm;
+    private int _editId;
+    private string _search = "", _filterCategory = "";
+    private string? _successMsg, _errorMsg;
+
+    private List<AIWebsiteDto> _websites = new();
+    private List<CategoryDto> _categories = new();
+    private CreateAIWebsiteDto _form = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDataAsync();
+    }
+
+    private async Task LoadDataAsync()
+    {
+        _loading = true;
+        var wsTask = WebsiteService.GetAllAsync();
+        var catsTask = CategoryService.GetAllAsync();
+        await Task.WhenAll(wsTask, catsTask);
+        var ws = await wsTask;
+        var cats = await catsTask;
+        _websites = ws.ToList();
+        _categories = cats.ToList();
+        _loading = false;
+    }
+
+    private IEnumerable<AIWebsiteDto> FilteredWebsites => _websites
+        .Where(w => (string.IsNullOrEmpty(_search) ||
+                     w.Name.Contains(_search, StringComparison.OrdinalIgnoreCase) ||
+                     w.Category.Contains(_search, StringComparison.OrdinalIgnoreCase)) &&
+                    (string.IsNullOrEmpty(_filterCategory) || w.Category == _filterCategory));
+
+    private void ShowAddForm()
+    {
+        _editId = 0;
+        _form = new CreateAIWebsiteDto();
+        _showForm = true;
+        _successMsg = _errorMsg = null;
+    }
+
+    private void EditWebsite(AIWebsiteDto w)
+    {
+        _editId = w.Id;
+        _form = new CreateAIWebsiteDto
+        {
+            Name = w.Name, Category = w.Category, PriceINR = w.PriceINR,
+            IsFree = w.IsFree, WebsiteURL = w.WebsiteURL,
+            Description = w.Description, LogoURL = w.LogoURL
+        };
+        _showForm = true;
+        _successMsg = _errorMsg = null;
+    }
+
+    private void CancelForm()
+    {
+        _showForm = false;
+        _editId = 0;
+        _form = new CreateAIWebsiteDto();
+    }
+
+    private async Task SaveAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_form.Name) || string.IsNullOrWhiteSpace(_form.WebsiteURL))
+        {
+            _errorMsg = "Name and Website URL are required.";
+            return;
+        }
+        try
+        {
+            if (_editId > 0)
+            {
+                var upd = new UpdateAIWebsiteDto
+                {
+                    Name = _form.Name, Category = _form.Category, PriceINR = _form.PriceINR,
+                    IsFree = _form.IsFree, WebsiteURL = _form.WebsiteURL,
+                    Description = _form.Description, LogoURL = _form.LogoURL
+                };
+                await WebsiteService.UpdateAsync(_editId, upd);
+                _successMsg = $"'{_form.Name}' updated successfully.";
+            }
+            else
+            {
+                await WebsiteService.CreateAsync(_form);
+                _successMsg = $"'{_form.Name}' added successfully.";
+            }
+            CancelForm();
+            await LoadDataAsync();
+        }
+        catch (Exception ex)
+        {
+            _errorMsg = $"Error: {ex.Message}";
+        }
+    }
+
+    private async Task DeleteAsync(int id, string name)
+    {
+        if (!await JSRuntime.InvokeAsync<bool>("confirm", $"Delete '{name}'?")) return;
+        try
+        {
+            await WebsiteService.DeleteAsync(id);
+            _successMsg = $"'{name}' deleted.";
+            await LoadDataAsync();
+        }
+        catch (Exception ex)
+        {
+            _errorMsg = $"Error: {ex.Message}";
+        }
+    }
+
+    [Inject] private Microsoft.JSInterop.IJSRuntime JSRuntime { get; set; } = null!;
+}

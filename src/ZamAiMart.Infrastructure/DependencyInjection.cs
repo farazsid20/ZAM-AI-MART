@@ -10,27 +10,27 @@ namespace ZamAiMart.Infrastructure;
 
 public static class DependencyInjection
 {
-    public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddInfrastructure(
+        this IServiceCollection services,
+        IConfiguration configuration)
     {
-        var usePostgres = string.Equals(configuration["UsePostgreSQL"], "true", StringComparison.OrdinalIgnoreCase);
-        var connectionString = configuration.GetConnectionString("DefaultConnection");
+        var connectionString = configuration.GetConnectionString("MySqlConnection")
+            ?? throw new InvalidOperationException("Connection string 'MySqlConnection' not found.");
 
-        if (usePostgres && !string.IsNullOrEmpty(connectionString))
-        {
-            services.AddDbContext<AppDbContext>(options =>
-                options.UseNpgsql(connectionString));
-        }
-        else
-        {
-            var sqliteConn = configuration.GetConnectionString("SQLite") ?? "Data Source=ZamAiMart.db";
-            services.AddDbContext<AppDbContext>(options =>
-                options.UseSqlite(sqliteConn));
-        }
+        services.AddDbContext<AppDbContext>(options =>
+            options.UseMySql(
+                connectionString,
+                ServerVersion.AutoDetect(connectionString),
+                mySql => mySql.EnableRetryOnFailure(3)
+            ));
 
+        services.AddScoped<IAIWebsiteRepository, AIWebsiteRepository>();
         services.AddScoped<ICategoryRepository, CategoryRepository>();
-        services.AddScoped<IAIToolRepository, AIToolRepository>();
+        services.AddScoped<IAdminRepository, AdminRepository>();
+
+        services.AddScoped<IAIWebsiteService, AIWebsiteService>();
         services.AddScoped<ICategoryService, CategoryService>();
-        services.AddScoped<IAIToolService, AIToolService>();
+        services.AddScoped<IAdminService, AdminService>();
 
         return services;
     }

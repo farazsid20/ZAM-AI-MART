@@ -7,37 +7,38 @@ public class AppDbContext : DbContext
 {
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
+    public DbSet<AIWebsite> AIWebsites => Set<AIWebsite>();
     public DbSet<Category> Categories => Set<Category>();
-    public DbSet<AITool> AITools => Set<AITool>();
+    public DbSet<AdminUser> AdminUsers => Set<AdminUser>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
 
-        modelBuilder.Entity<Category>(entity =>
-        {
-            entity.HasKey(e => e.Id);
-            entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
-            entity.Property(e => e.Slug).IsRequired().HasMaxLength(100);
-            entity.Property(e => e.Icon).HasMaxLength(50);
-            entity.Property(e => e.Description).HasMaxLength(500);
-            entity.HasIndex(e => e.Slug).IsUnique();
-        });
-
-        modelBuilder.Entity<AITool>(entity =>
+        modelBuilder.Entity<AIWebsite>(entity =>
         {
             entity.HasKey(e => e.Id);
             entity.Property(e => e.Name).IsRequired().HasMaxLength(200);
-            entity.Property(e => e.Description).IsRequired().HasMaxLength(1000);
-            entity.Property(e => e.LogoUrl).HasMaxLength(500);
-            entity.Property(e => e.WebsiteUrl).IsRequired().HasMaxLength(500);
-            entity.Property(e => e.Price).HasPrecision(18, 2);
-            entity.Property(e => e.Tags).HasMaxLength(500);
+            entity.Property(e => e.Category).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.PriceINR).HasPrecision(18, 2);
+            entity.Property(e => e.WebsiteURL).IsRequired().HasMaxLength(500);
+            entity.Property(e => e.Description).HasColumnType("text");
+            entity.Property(e => e.LogoURL).HasMaxLength(500);
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP(6)");
+        });
 
-            entity.HasOne(e => e.Category)
-                  .WithMany(c => c.AITools)
-                  .HasForeignKey(e => e.CategoryId)
-                  .OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<Category>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.CategoryName).IsRequired().HasMaxLength(100);
+        });
+
+        modelBuilder.Entity<AdminUser>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Username).IsRequired().HasMaxLength(100);
+            entity.HasIndex(e => e.Username).IsUnique();
+            entity.Property(e => e.PasswordHash).IsRequired();
         });
     }
 }

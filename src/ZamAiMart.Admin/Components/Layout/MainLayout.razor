@@ -1,0 +1,50 @@
+@inherits LayoutComponentBase
+@using Microsoft.AspNetCore.Components.Authorization
+
+<div class="admin-shell">
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <span class="brand-logo">Z</span>
+            <span class="brand-text">ZAM AI MART</span>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="/" class="nav-item @(IsActive("/"))"><span class="icon">📊</span> Dashboard</a>
+            <a href="/websites" class="nav-item @(IsActive("/websites"))"><span class="icon">🤖</span> AI Websites</a>
+            <a href="/categories" class="nav-item @(IsActive("/categories"))"><span class="icon">🗂️</span> Categories</a>
+            <hr class="nav-divider"/>
+            <a href="/logout" class="nav-item nav-logout"><span class="icon">🚪</span> Logout</a>
+        </nav>
+    </aside>
+
+    <div class="main-content">
+        <header class="topbar">
+            <div class="topbar-title">@PageTitle</div>
+            <AuthorizeView>
+                <Authorized>
+                    <div class="topbar-user">
+                        <span class="user-badge">👤 @context.User.Identity?.Name</span>
+                    </div>
+                </Authorized>
+            </AuthorizeView>
+        </header>
+        <main class="page-body">
+            @Body
+        </main>
+    </div>
+</div>
+
+@inject NavigationManager Nav
+
+@code {
+    [CascadingParameter] private Task<AuthenticationState>? AuthState { get; set; }
+
+    private string PageTitle { get; set; } = "Admin Panel";
+
+    private string IsActive(string href)
+    {
+        var uri = Nav.ToBaseRelativePath(Nav.Uri);
+        if (href == "/" && uri == "") return "active";
+        if (href != "/" && uri.StartsWith(href.TrimStart('/'))) return "active";
+        return "";
+    }
+}

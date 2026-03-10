@@ -1,0 +1,84 @@
+@page "/"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+@using ZamAiMart.Core.Interfaces
+@inject IAIWebsiteService WebsiteService
+@inject ICategoryService CategoryService
+
+<div class="dashboard">
+    <h2 class="page-title">Dashboard</h2>
+
+    @if (_loading)
+    {
+        <div class="loading">Loading stats...</div>
+    }
+    else
+    {
+        <div class="stats-grid">
+            <div class="stat-card stat-blue">
+                <div class="stat-value">@_totalWebsites</div>
+                <div class="stat-label">Total AI Websites</div>
+                <div class="stat-icon">🤖</div>
+            </div>
+            <div class="stat-card stat-green">
+                <div class="stat-value">@_freeCount</div>
+                <div class="stat-label">Free Tools</div>
+                <div class="stat-icon">✅</div>
+            </div>
+            <div class="stat-card stat-purple">
+                <div class="stat-value">@_paidCount</div>
+                <div class="stat-label">Paid Tools</div>
+                <div class="stat-icon">💰</div>
+            </div>
+            <div class="stat-card stat-orange">
+                <div class="stat-value">@_totalCategories</div>
+                <div class="stat-label">Categories</div>
+                <div class="stat-icon">🗂️</div>
+            </div>
+        </div>
+
+        <div class="recent-section">
+            <h3>Recently Added AI Websites</h3>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Category</th>
+                        <th>Price</th>
+                        <th>Added</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var w in _recent)
+                    {
+                        <tr>
+                            <td><a href="@w.WebsiteURL" target="_blank">@w.Name</a></td>
+                            <td><span class="badge">@w.Category</span></td>
+                            <td>@(w.IsFree ? "FREE" : $"₹{w.PriceINR:N0}")</td>
+                            <td>@w.CreatedAt.ToString("dd MMM yyyy")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@code {
+    private bool _loading = true;
+    private int _totalWebsites, _freeCount, _paidCount, _totalCategories;
+    private List<ZamAiMart.Core.DTOs.AIWebsiteDto> _recent = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var websitesTask = WebsiteService.GetAllAsync();
+        var categoriesTask = CategoryService.GetAllAsync();
+        await Task.WhenAll(websitesTask, categoriesTask);
+        var all = (await websitesTask).ToList();
+        _totalWebsites = all.Count;
+        _freeCount = all.Count(x => x.IsFree);
+        _paidCount = all.Count(x => !x.IsFree);
+        _totalCategories = (await categoriesTask).Count();
+        _recent = all.Take(10).ToList();
+        _loading = false;
+    }
+}

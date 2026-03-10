@@ -1,103 +1,50 @@
 namespace ZamAiMart.Client.Models;
 
-public enum PricingType
+/// <summary>Matches the AIWebsiteDto returned by /api/aiwebsites</summary>
+public class AIWebsiteDto
 {
-    Free = 0,
-    Monthly = 1,
-    Yearly = 2,
-    OneTime = 3,
-    Freemium = 4
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string Category { get; set; } = string.Empty;
+    public decimal PriceINR { get; set; }
+    public bool IsFree { get; set; }
+    public string WebsiteURL { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public string? LogoURL { get; set; }
+    public string FormattedPrice => IsFree ? "FREE" : $"₹{PriceINR:N0}";
+    public DateTime CreatedAt { get; set; }
 }
 
+/// <summary>Matches the CategoryDto returned by /api/categories</summary>
 public class CategoryDto
 {
     public int Id { get; set; }
-    public string Name { get; set; } = string.Empty;
-    public string Slug { get; set; } = string.Empty;
-    public string Icon { get; set; } = string.Empty;
-    public string? Description { get; set; }
-    public int ToolCount { get; set; }
-    public DateTime CreatedAt { get; set; }
-}
-
-public class AIToolDto
-{
-    public int Id { get; set; }
-    public string Name { get; set; } = string.Empty;
-    public string Description { get; set; } = string.Empty;
-    public string LogoUrl { get; set; } = string.Empty;
-    public string WebsiteUrl { get; set; } = string.Empty;
-    public int CategoryId { get; set; }
     public string CategoryName { get; set; } = string.Empty;
-    public string CategoryIcon { get; set; } = string.Empty;
-    public decimal Price { get; set; }
-    public PricingType PricingType { get; set; }
+
+    // Computed helpers for the UI
+    public string Icon => CategoryName switch
+    {
+        var n when n.Contains("Chatbot") => "💬",
+        var n when n.Contains("Image") => "🎨",
+        var n when n.Contains("Video") => "🎬",
+        var n when n.Contains("Code") => "💻",
+        var n when n.Contains("Writing") => "✍️",
+        var n when n.Contains("Voice") || n.Contains("Audio") => "🎙️",
+        var n when n.Contains("Music") => "🎵",
+        var n when n.Contains("Business") => "📈",
+        var n when n.Contains("Productivity") => "⚡",
+        var n when n.Contains("Design") => "🖌️",
+        _ => "🤖"
+    };
+}
+
+public class CreateAIWebsiteDto
+{
+    public string Name { get; set; } = string.Empty;
+    public string Category { get; set; } = string.Empty;
+    public decimal PriceINR { get; set; }
     public bool IsFree { get; set; }
-    public bool IsFeatured { get; set; }
-    public string? Tags { get; set; }
-    public string FormattedPrice { get; set; } = string.Empty;
-    public DateTime CreatedAt { get; set; }
-}
-
-public class CreateAIToolDto
-{
-    public string Name { get; set; } = string.Empty;
+    public string WebsiteURL { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
-    public string LogoUrl { get; set; } = string.Empty;
-    public string WebsiteUrl { get; set; } = string.Empty;
-    public int CategoryId { get; set; }
-    public decimal Price { get; set; }
-    public PricingType PricingType { get; set; } = PricingType.Free;
-    public bool IsFree { get; set; } = true;
-    public bool IsFeatured { get; set; } = false;
-    public string? Tags { get; set; }
-}
-
-public class UpdateAIToolDto
-{
-    public string Name { get; set; } = string.Empty;
-    public string Description { get; set; } = string.Empty;
-    public string LogoUrl { get; set; } = string.Empty;
-    public string WebsiteUrl { get; set; } = string.Empty;
-    public int CategoryId { get; set; }
-    public decimal Price { get; set; }
-    public PricingType PricingType { get; set; }
-    public bool IsFree { get; set; }
-    public bool IsFeatured { get; set; }
-    public string? Tags { get; set; }
-}
-
-public class CreateCategoryDto
-{
-    public string Name { get; set; } = string.Empty;
-    public string Slug { get; set; } = string.Empty;
-    public string Icon { get; set; } = string.Empty;
-    public string? Description { get; set; }
-}
-
-public class UpdateCategoryDto
-{
-    public string Name { get; set; } = string.Empty;
-    public string Slug { get; set; } = string.Empty;
-    public string Icon { get; set; } = string.Empty;
-    public string? Description { get; set; }
-}
-
-public class AIToolSearchDto
-{
-    public string? Query { get; set; }
-    public int? CategoryId { get; set; }
-    public bool? IsFree { get; set; }
-    public bool? IsFeatured { get; set; }
-    public int Page { get; set; } = 1;
-    public int PageSize { get; set; } = 20;
-}
-
-public class PagedResult<T>
-{
-    public List<T> Items { get; set; } = new();
-    public int TotalCount { get; set; }
-    public int Page { get; set; }
-    public int PageSize { get; set; }
-    public int TotalPages => PageSize > 0 ? (int)Math.Ceiling((double)TotalCount / PageSize) : 0;
+    public string? LogoURL { get; set; }
 }

@@ -1,21 +1,20 @@
-# ZAM AI MART 🤖
+# ZAM AI MART
 
-> **Discover the Best AI Tools in One Place**
->
-> Developed by **Ahmad Faraz Siddiqui**
-
-A production-ready AI tools directory website built with Blazor WebAssembly, ASP.NET Core Web API, and PostgreSQL.
+> A full production-ready AI tools directory with INR pricing, built by **Ahmad Faraz Siddiqui**.
 
 ---
 
-## 🚀 Tech Stack
+## 🛠️ Tech Stack
 
 | Layer | Technology |
-|-------|-----------|
-| Frontend | Blazor WebAssembly (.NET 9) |
-| Styling | Tailwind CSS |
-| Backend | ASP.NET Core Web API (.NET 9) |
-| Database | PostgreSQL + Entity Framework Core 9 |
+|---|---|
+| Backend API | .NET 8 Web API |
+| Admin Panel | .NET 8 Blazor Server |
+| Frontend | .NET 10 Blazor WebAssembly |
+| Database | MySQL (local) |
+| ORM | Entity Framework Core 8 + Pomelo MySQL |
+| Auth | JWT (API) + Cookie Auth (Admin) |
+| API Docs | Swagger / OpenAPI |
 | Architecture | Clean Architecture |
 
 ---
@@ -23,195 +22,211 @@ A production-ready AI tools directory website built with Blazor WebAssembly, ASP
 ## 📁 Project Structure
 
 ```
-ZAM AI MART/
-├── ZamAiMart.sln
-└── src/
-    ├── ZamAiMart.Core/              # Domain - Models, DTOs, Interfaces
-    │   ├── Entities/
-    │   │   ├── AITool.cs
-    │   │   └── Category.cs
-    │   ├── DTOs/
-    │   │   ├── AIToolDto.cs
-    │   │   └── CategoryDto.cs
-    │   ├── Interfaces/
-    │   │   ├── IAIToolRepository.cs
-    │   │   ├── ICategoryRepository.cs
-    │   │   ├── IAIToolService.cs
-    │   │   └── ICategoryService.cs
-    │   └── Enums/
-    │       └── PricingType.cs
-    │
-    ├── ZamAiMart.Infrastructure/    # Data Access - EF Core, Repositories, Services
-    │   ├── Data/
-    │   │   ├── AppDbContext.cs
-    │   │   └── SeedData.cs          # 200+ AI tools!
-    │   ├── Repositories/
-    │   │   ├── AIToolRepository.cs
-    │   │   └── CategoryRepository.cs
-    │   ├── Services/
-    │   │   ├── AIToolService.cs
-    │   │   └── CategoryService.cs
-    │   └── DependencyInjection.cs
-    │
-    ├── ZamAiMart.API/               # ASP.NET Core Web API
-    │   ├── Controllers/
-    │   │   ├── CategoriesController.cs
-    │   │   └── ToolsController.cs
-    │   ├── Program.cs
-    │   └── appsettings.json
-    │
-    └── ZamAiMart.Client/            # Blazor WebAssembly Frontend
-        ├── Layout/
-        │   ├── MainLayout.razor
-        │   ├── NavMenu.razor
-        │   └── Footer.razor
-        ├── Pages/
-        │   ├── Home.razor           # Hero, Featured, Categories, Latest
-        │   ├── Tools.razor          # Tools directory with search & filters
-        │   ├── Categories.razor     # Browse by category
-        │   ├── About.razor          # About the platform
-        │   ├── Contact.razor        # Contact info + form
-        │   └── Admin/
-        │       ├── Dashboard.razor  # Admin overview
-        │       ├── ManageTools.razor # Add/Edit/Delete tools
-        │       └── ManageCategories.razor
-        ├── Shared/
-        │   ├── ToolCard.razor       # Reusable tool card component
-        │   ├── CategoryCard.razor   # Reusable category card
-        │   └── LoadingSpinner.razor
-        ├── Services/
-        │   └── ApiService.cs        # HTTP client for API calls
-        └── wwwroot/
-            ├── index.html           # Tailwind CSS + dark mode setup
-            └── css/app.css
+src/
+├── ZamAiMart.Core/            # Entities, DTOs, Interfaces (.NET 8)
+├── ZamAiMart.Infrastructure/  # DbContext, Repositories, Services (.NET 8)
+├── ZamAiMart.API/             # REST API + Swagger (.NET 8)  → http://localhost:5000
+├── ZamAiMart.Admin/           # Blazor Server Admin Panel   → http://localhost:5002
+└── ZamAiMart.Client/          # Blazor WASM Frontend        → http://localhost:5001
 ```
 
 ---
 
-## ⚙️ Setup & Installation
+## 🗄️ Database Setup
 
-### Prerequisites
-- [.NET 9 SDK](https://dotnet.microsoft.com/download/dotnet/9.0)
-- [PostgreSQL 14+](https://www.postgresql.org/download/)
-- Node.js (optional, for Tailwind CLI in production)
+### 1. Install & Start MySQL
 
-### 1. Configure Database
+**Option A — MySQL Community Server:**
+```
+https://dev.mysql.com/downloads/mysql/
+```
 
-Edit `src/ZamAiMart.API/appsettings.json`:
+**Option B — XAMPP (includes MySQL):**
+```
+https://www.apachefriends.org/
+```
+
+**Option C — Docker:**
+```bash
+docker run --name zam-mysql -e MYSQL_ROOT_PASSWORD=yourpassword -p 3306:3306 -d mysql:8.0
+```
+
+### 2. Create the database
+
+```sql
+CREATE DATABASE zam_ai_mart_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```
+
+### 3. Set your MySQL password
+
+Edit **both** config files and replace `yourpassword`:
+
+- `src/ZamAiMart.API/appsettings.json`
+- `src/ZamAiMart.Admin/appsettings.json`
 
 ```json
 {
   "ConnectionStrings": {
-    "DefaultConnection": "Host=localhost;Port=5432;Database=ZamAiMart;Username=postgres;Password=YOUR_PASSWORD"
+    "MySqlConnection": "Server=localhost;Database=zam_ai_mart_db;User=root;Password=yourpassword;"
   }
 }
 ```
 
-### 2. Run the API
+---
 
-```powershell
+## ▶️ Running the Application
+
+### Start the API
+
+```bash
 cd src/ZamAiMart.API
 dotnet run
 ```
 
-API runs at `http://localhost:5000`
+- API: `http://localhost:5000`
+- Swagger: `http://localhost:5000/swagger`
+- Tables are auto-created and seeded on first run ✅
 
-> **Note:** The database is automatically created and seeded with 200+ AI tools on first run.
+### Start the Admin Panel
 
-### 3. Run the Blazor Client
+```bash
+cd src/ZamAiMart.Admin
+dotnet run
+```
 
-```powershell
+- Admin: `http://localhost:5002`
+- Default login: **admin / Admin@1234**
+
+### Start the Frontend (Optional)
+
+```bash
 cd src/ZamAiMart.Client
 dotnet run
 ```
 
-Client runs at `http://localhost:5001` (or the port shown in terminal)
-
-> Make sure the API URL in `Program.cs` matches your API port.
+- Frontend: `http://localhost:5001`
 
 ---
 
-## 🌐 API Endpoints
+## 🗃️ Database Schema
+
+### AIWebsites
+
+| Column | Type | Notes |
+|---|---|---|
+| Id | int | Primary key, auto-increment |
+| Name | varchar(200) | Tool name |
+| Category | varchar(100) | Category name |
+| PriceINR | decimal(18,2) | Price in Indian Rupees |
+| IsFree | boolean | True = FREE |
+| WebsiteURL | varchar(500) | Original website URL |
+| Description | text | Tool description |
+| LogoURL | varchar(500) | Logo image URL |
+| CreatedAt | datetime | Auto timestamp |
 
 ### Categories
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/categories` | Get all categories |
-| GET | `/api/categories/{id}` | Get category by ID |
-| POST | `/api/categories` | Create category |
-| PUT | `/api/categories/{id}` | Update category |
-| DELETE | `/api/categories/{id}` | Delete category |
 
-### AI Tools
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/tools` | Get all tools (paginated, searchable) |
-| GET | `/api/tools/{id}` | Get tool by ID |
-| GET | `/api/tools/featured` | Get featured tools |
-| GET | `/api/tools/latest` | Get latest tools |
-| GET | `/api/tools/category/{categoryId}` | Get tools by category |
-| POST | `/api/tools` | Create tool |
-| PUT | `/api/tools/{id}` | Update tool |
-| DELETE | `/api/tools/{id}` | Delete tool |
+| Column | Type |
+|---|---|
+| Id | int |
+| CategoryName | varchar(100) |
 
-### Search Query Parameters
-```
-GET /api/tools?query=chatgpt&categoryId=1&isFree=true&page=1&pageSize=20
+### AdminUsers
+
+| Column | Type |
+|---|---|
+| Id | int |
+| Username | varchar(100) |
+| PasswordHash | text (BCrypt) |
+
+---
+
+## 📡 API Endpoints
+
+### AI Websites
+
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| GET | `/api/aiwebsites` | Public | Get all websites |
+| GET | `/api/aiwebsites?category=AI+Chatbots` | Public | Filter by category |
+| GET | `/api/aiwebsites/{id}` | Public | Get by ID |
+| POST | `/api/aiwebsites` | Admin JWT | Create |
+| PUT | `/api/aiwebsites/{id}` | Admin JWT | Update |
+| DELETE | `/api/aiwebsites/{id}` | Admin JWT | Delete |
+
+### Categories
+
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| GET | `/api/categories` | Public | Get all categories |
+| POST | `/api/categories` | Admin JWT | Create category |
+
+### Auth
+
+| Method | Endpoint | Description |
+|---|---|---|
+| POST | `/api/auth/login` | Get JWT token |
+
+**Login request:**
+```json
+{
+  "username": "admin",
+  "password": "Admin@1234"
+}
 ```
 
 ---
 
-## 🎨 Features
+## 🔑 Admin Panel
 
-### Public Site
-- **Homepage** - Hero, Featured Tools, Category Grid, Latest Tools
-- **AI Tools Directory** - Searchable, filterable grid with pagination
-- **Category Browser** - Browse tools by 10 categories
-- **Tool Cards** - Logo, name, description, price in ₹, visit button
-- **About Page** - Platform info + developer credit
-- **Contact Page** - Contact info + form
-- **Dark Mode** - Toggle with localStorage persistence
-- **Responsive Design** - Mobile-first, works on all devices
+Visit `http://localhost:5002`
 
-### Admin Dashboard
-- **Dashboard** - Stats overview + recent tools
-- **Manage Tools** - Add, Edit, Delete AI tools
-- **Manage Categories** - Add, Edit, Delete categories
-
-### AI Tool Categories
-1. 💬 AI Chatbots
-2. 🎨 AI Image Generators
-3. 🎬 AI Video Generators
-4. 💻 AI Coding Tools
-5. ✍️ AI Writing Tools
-6. 🎙️ AI Voice Tools
-7. 🎵 AI Music Generators
-8. 📈 AI Marketing Tools
-9. ⚡ AI Productivity Tools
-10. 🖌️ AI Design Tools
+- **Login:** admin / Admin@1234
+- **Dashboard:** Stats overview (total tools, free/paid split, categories)
+- **AI Websites:** Full CRUD — Add, Edit, Delete, Upload Logo URL, Filter by category
+- **Categories:** Add new categories
 
 ---
 
 ## 💰 Pricing Display
 
-All prices are shown in **Indian Rupees (₹)**:
-- **FREE** - Free tools
-- **₹499/month** - Monthly subscription
-- **₹1999/year** - Annual subscription
-- **Freemium** - Free + paid tiers
+- Tools with `IsFree = true` show **FREE** tag
+- Paid tools display **₹{price}** (e.g. ₹1,660)
+- Click any tool card → opens the original website in a new tab
 
 ---
 
-## 👨‍💻 Developer
+## 🔐 Security Notes
 
-**Ahmad Faraz Siddiqui**  
-Full-Stack Developer | AI Enthusiast
-
-📞 +91-9161007123  
-📍 Sultanpur, Uttar Pradesh - 228001, India
+- Admin passwords are hashed with **BCrypt** (never stored as plain text)
+- API uses **JWT Bearer** tokens (8-hour expiry)
+- Admin panel uses **cookie authentication** with sliding expiration
+- Change the JWT secret in `appsettings.json` before production deployment
 
 ---
 
-## © License
+## 🔄 Apply Migrations (EF Core)
 
-© 2026 ZAM AI MART. Developed by Ahmad Faraz Siddiqui.
+The app uses `EnsureCreated()` to auto-create tables. For production migrations:
+
+```bash
+# From project root
+cd src/ZamAiMart.API
+
+dotnet ef migrations add InitialCreate --project ../ZamAiMart.Infrastructure
+dotnet ef database update
+```
+
+---
+
+## 🐳 Docker (Optional — API only)
+
+```bash
+cd src/ZamAiMart.API
+docker build -t zam-api .
+docker run -p 5000:5000 -e "ConnectionStrings__MySqlConnection=..." zam-api
+```
+
+---
+
+*Developed by Ahmad Faraz Siddiqui*

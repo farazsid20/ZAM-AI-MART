@@ -1,0 +1,94 @@
+@page "/categories"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+@using ZamAiMart.Core.DTOs
+@using ZamAiMart.Core.Interfaces
+@inject ICategoryService CategoryService
+
+<div class="page-section">
+    <div class="page-header">
+        <h2 class="page-title">Categories</h2>
+    </div>
+
+    @if (!string.IsNullOrEmpty(_successMsg))
+    {
+        <div class="alert alert-success">@_successMsg</div>
+    }
+    @if (!string.IsNullOrEmpty(_errorMsg))
+    {
+        <div class="alert alert-error">@_errorMsg</div>
+    }
+
+    <div class="form-card">
+        <h3>Add New Category</h3>
+        <div class="form-row">
+            <input class="form-control" @bind="_newCategoryName" placeholder="Category name, e.g. AI Image Generators" />
+            <button class="btn btn-primary" @onclick="AddCategoryAsync">Add Category</button>
+        </div>
+    </div>
+
+    @if (_loading)
+    {
+        <div class="loading">Loading categories...</div>
+    }
+    else
+    {
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Category Name</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var cat in _categories)
+                {
+                    <tr>
+                        <td>@cat.Id</td>
+                        <td>@cat.CategoryName</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        <p class="record-count">@_categories.Count categories total</p>
+    }
+</div>
+
+@code {
+    private bool _loading = true;
+    private string _newCategoryName = "";
+    private string? _successMsg, _errorMsg;
+    private List<CategoryDto> _categories = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _categories = (await CategoryService.GetAllAsync()).ToList();
+        _loading = false;
+    }
+
+    private async Task AddCategoryAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_newCategoryName))
+        {
+            _errorMsg = "Category name is required.";
+            return;
+        }
+        try
+        {
+            await CategoryService.CreateAsync(new CreateCategoryDto { CategoryName = _newCategoryName });
+            _successMsg = $"Category '{_newCategoryName}' added.";
+            _newCategoryName = "";
+            _errorMsg = null;
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            _errorMsg = $"Error: {ex.Message}";
+        }
+    }
+}

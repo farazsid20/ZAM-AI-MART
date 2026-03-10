@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ZamAiMart.Core.DTOs;
 using ZamAiMart.Core.Interfaces;
@@ -5,53 +6,32 @@ using ZamAiMart.Core.Interfaces;
 namespace ZamAiMart.API.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/categories")]
+[Produces("application/json")]
 public class CategoriesController : ControllerBase
 {
     private readonly ICategoryService _service;
-    private readonly ILogger<CategoriesController> _logger;
 
-    public CategoriesController(ICategoryService service, ILogger<CategoriesController> logger)
+    public CategoriesController(ICategoryService service)
     {
         _service = service;
-        _logger = logger;
     }
 
+    /// <summary>Get all categories.</summary>
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<CategoryDto>>> GetAll()
+    public async Task<IActionResult> GetAll()
     {
-        var categories = await _service.GetAllAsync();
-        return Ok(categories);
+        var items = await _service.GetAllAsync();
+        return Ok(items);
     }
 
-    [HttpGet("{id:int}")]
-    public async Task<ActionResult<CategoryDto>> GetById(int id)
-    {
-        var category = await _service.GetByIdAsync(id);
-        if (category == null) return NotFound();
-        return Ok(category);
-    }
-
+    /// <summary>Create a new category (Admin only).</summary>
     [HttpPost]
-    public async Task<ActionResult<CategoryDto>> Create([FromBody] CreateCategoryDto dto)
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> Create([FromBody] CreateCategoryDto dto)
     {
+        if (!ModelState.IsValid) return BadRequest(ModelState);
         var created = await _service.CreateAsync(dto);
-        return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
-    }
-
-    [HttpPut("{id:int}")]
-    public async Task<ActionResult<CategoryDto>> Update(int id, [FromBody] UpdateCategoryDto dto)
-    {
-        var updated = await _service.UpdateAsync(id, dto);
-        if (updated == null) return NotFound();
-        return Ok(updated);
-    }
-
-    [HttpDelete("{id:int}")]
-    public async Task<IActionResult> Delete(int id)
-    {
-        var deleted = await _service.DeleteAsync(id);
-        if (!deleted) return NotFound();
-        return NoContent();
+        return CreatedAtAction(nameof(GetAll), created);
     }
 }
