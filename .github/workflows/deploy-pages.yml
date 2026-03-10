@@ -31,25 +31,43 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore src/ZamAiMart.Client/ZamAiMart.Client.csproj
 
-      - name: Publish Blazor WASM
+      - name: Publish Blazor WASM for GitHub Pages
         run: |
           dotnet publish src/ZamAiMart.Client/ZamAiMart.Client.csproj \
             -c Release \
             -o publish/client \
             --no-restore \
-            -p:GHPages=true
+            -p:BlazorCacheBootResources=false
 
-      - name: Fix base href for GitHub Pages
+      - name: Fix base href for GitHub Pages subdirectory
         run: |
-          # Replace base href for GitHub Pages subdirectory
-          sed -i 's|<base href="/" />|<base href="/ZAM-AI-MART/" />|g' \
-            publish/client/wwwroot/index.html
+          cd publish/client/wwwroot
+          # Replace base href to match GitHub Pages repo sub-path
+          sed -i 's|<base href="/" />|<base href="/ZAM-AI-MART/" />|g' index.html
+          # Also patch the integrity check off in blazor.boot.json if present
+          if [ -f "_framework/blazor.boot.json" ]; then
+            python3 -c "
+          import json, sys
+          with open('_framework/blazor.boot.json','r') as f:
+              data = json.load(f)
+          if 'resources' in data:
+              for section in data['resources'].values():
+                  if isinstance(section, dict):
+                      for key in list(section.keys()):
+                          section[key] = ''
+          with open('_framework/blazor.boot.json','w') as f:
+              json.dump(data, f)
+          "
+          fi
 
-      - name: Copy 404.html for SPA routing
+      - name: Create 404.html for SPA client-side routing
         run: cp publish/client/wwwroot/index.html publish/client/wwwroot/404.html
 
-      - name: Add .nojekyll (disable Jekyll processing)
+      - name: Add .nojekyll to prevent Jekyll processing
         run: touch publish/client/wwwroot/.nojekyll
+
+      - name: List output files (debug)
+        run: ls -la publish/client/wwwroot/ && head -5 publish/client/wwwroot/index.html
 
       - name: Setup GitHub Pages
         uses: actions/configure-pages@v4
