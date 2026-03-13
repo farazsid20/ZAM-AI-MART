@@ -23,10 +23,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup .NET
+      - name: Setup .NET 8 SDK
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '9.0.x'
+          dotnet-version: '8.0.x'
 
       - name: Restore dependencies
         run: dotnet restore src/ZamAiMart.Client/ZamAiMart.Client.csproj
@@ -39,38 +39,11 @@ jobs:
             --no-restore \
             -p:BlazorCacheBootResources=false
 
-      - name: Fix base href and fingerprinted asset paths for GitHub Pages
+      - name: Fix base href for GitHub Pages
         run: |
           cd publish/client/wwwroot
           # Replace base href to match GitHub Pages repo sub-path
           sed -i 's|<base href="/" />|<base href="/ZAM-AI-MART/" />|g' index.html
-
-          # In .NET 9/10, blazor.webassembly.js is published with a fingerprint hash
-          # (e.g. blazor.webassembly.66stpp682q.js). index.html still references the
-          # unfingerprinted name, causing a 404. Detect and patch it.
-          BLAZOR_JS=$(find _framework -maxdepth 1 -name "blazor.webassembly.*.js" \
-                        ! -name "*.gz" ! -name "*.br" 2>/dev/null | head -1 | xargs basename 2>/dev/null || true)
-          if [ -n "$BLAZOR_JS" ]; then
-            sed -i "s|_framework/blazor.webassembly.js|_framework/${BLAZOR_JS}|g" index.html
-            echo "Patched Blazor bootstrap script: blazor.webassembly.js -> ${BLAZOR_JS}"
-          else
-            echo "No fingerprinted blazor.webassembly.js found; using original reference"
-          fi
-
-          # In .NET 10, dotnet.js is also fingerprinted (e.g. dotnet.abcd1234.js) but
-          # blazor.webassembly.js still imports './dotnet.js'. Create a non-fingerprinted
-          # alias so the dynamic import succeeds on static hosts like GitHub Pages.
-          DOTNET_JS=$(find _framework -maxdepth 1 -name "dotnet.*.js" \
-                        ! -name "*.gz" ! -name "*.br" 2>/dev/null | head -1 | xargs basename 2>/dev/null || true)
-          if [ -n "$DOTNET_JS" ]; then
-            cp "_framework/${DOTNET_JS}" "_framework/dotnet.js"
-            echo "Created alias _framework/dotnet.js -> ${DOTNET_JS}"
-          else
-            echo "No fingerprinted dotnet.*.js found; skipping alias"
-          fi
-
-          echo "--- index.html script line ---"
-          grep -i "blazor" index.html || true
 
       - name: Create 404.html for SPA client-side routing
         run: cp publish/client/wwwroot/index.html publish/client/wwwroot/404.html
