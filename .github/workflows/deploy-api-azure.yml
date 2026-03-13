@@ -1,0 +1,43 @@
+name: Deploy API to Azure Web App
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'src/ZamAiMart.API/**'
+      - 'src/ZamAiMart.Core/**'
+      - 'src/ZamAiMart.Infrastructure/**'
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    name: Build & Deploy API
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore src/ZamAiMart.API/ZamAiMart.API.csproj
+
+      - name: Publish API
+        run: dotnet publish src/ZamAiMart.API/ZamAiMart.API.csproj -c Release -o publish/api --no-restore
+
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ secrets.AZURE_WEBAPP_NAME }}
+          resource-group-name: ${{ secrets.AZURE_RESOURCE_GROUP }}
+          package: publish/api
+
