@@ -39,11 +39,22 @@ jobs:
             --no-restore \
             -p:BlazorCacheBootResources=false
 
-      - name: Fix base href for GitHub Pages
+      - name: Fix base href and fingerprinted blazor.webassembly.js
         run: |
           cd publish/client/wwwroot
           # Replace base href to match GitHub Pages repo sub-path
           sed -i 's|<base href="/" />|<base href="/ZAM-AI-MART/" />|g' index.html
+
+          # In .NET 8, blazor.webassembly.js is fingerprinted (e.g. blazor.webassembly.xxx.js)
+          # but index.html still references the unfingerprinted name. Patch it to the real file.
+          BLAZOR_JS=$(find _framework -maxdepth 1 -name "blazor.webassembly.*.js" \
+                        ! -name "*.gz" ! -name "*.br" 2>/dev/null | head -1 | xargs basename 2>/dev/null || true)
+          if [ -n "$BLAZOR_JS" ]; then
+            sed -i "s|_framework/blazor.webassembly.js|_framework/${BLAZOR_JS}|g" index.html
+            echo "Patched blazor.webassembly.js -> ${BLAZOR_JS}"
+          else
+            echo "No fingerprinted blazor.webassembly.*.js found; leaving default reference"
+          fi
 
       - name: Create 404.html for SPA client-side routing
         run: cp publish/client/wwwroot/index.html publish/client/wwwroot/404.html
