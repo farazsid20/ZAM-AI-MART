@@ -143,6 +143,20 @@
             });
             observer.observe(app, { childList: true, subtree: false });
 
+            // If Blazor shows its error UI, also remove the loading screen so the user can see it
+            var errorUi = document.getElementById('blazor-error-ui');
+            if (errorUi) {
+                var errorObserver = new MutationObserver(function () {
+                    var style = window.getComputedStyle(errorUi);
+                    if (style && style.display !== 'none') {
+                        screen.classList.add('fade-out');
+                        setTimeout(function () { screen.remove(); }, 420);
+                        errorObserver.disconnect();
+                    }
+                });
+                errorObserver.observe(errorUi, { attributes: true, attributeFilter: ['style', 'class'] });
+            }
+
             // After 12s show "still loading" hint (Blazor WASM is large on first visit)
             setTimeout(function () {
                 var sub = document.querySelector('#loading-screen .loading-sub');
